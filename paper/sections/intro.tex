@@ -1,0 +1,64 @@
+\section{Introduction}
+
+A system of coupled harmonic oscillators decomposes into normal modes:
+orthogonal coordinates that evolve independently, each with its own
+characteristic frequency. The eigen-decomposition of an equity
+correlation matrix has the same algebraic form. Its eigenvectors are
+portfolios with (in-sample) uncorrelated returns, and its eigenvalues
+are their variances. This paper asks whether the analogy can be made
+\emph{predictive}. Do some normal modes of the market behave like
+displaced oscillators that are pulled back to equilibrium, and can we
+tell in advance which ones?
+
+The question connects three literatures. Random matrix theory shows
+that most of the eigenvalues of a large sample correlation matrix are
+indistinguishable from noise, and the Marchenko--Pastur law gives a
+principled edge between signal and noise
+\citep{laloux1999,plerou2002,bunbouchaud2017}. Statistical arbitrage
+trades the mean reversion of residual portfolios, typically residuals
+of stocks against principal-component or ETF factors
+\citep{avellaneda2010,gatev2006}, and short-term reversal profits are
+known to vary strongly with market conditions
+\citep{lehmann1990,nagel2012,khandani2011}. Machine-learning methods
+have become a standard tool for extracting weak predictive signals from
+many correlated characteristics \citep{gu2020}.
+
+We make three contributions.
+
+\emph{A physical prediction and a spectrum-wide test.} We take the
+oscillator analogy to its overdamped, thermally driven limit, a
+multivariate Ornstein--Uhlenbeck process. In that model the return
+covariance and the stiffness matrix share eigenvectors and the
+\emph{lowest}-variance modes are the fastest to revert. We then measure
+out-of-sample reversion for every mode of the spectrum. The modes above
+the Marchenko--Pastur edge, the conventional ``signal'', do not revert
+(Sharpe \SRSignalLevel). Reversion is concentrated in the noise bulk
+(Sharpe \SRMiddleLevel{} for modes 100--174, $t=\TMiddleLevel$), and
+daily mode returns there have significantly negative autocorrelation.
+The direction of the physical prediction holds, but its quantitative
+form (half-life proportional to eigenvalue) does not.
+
+\emph{Supervised prediction of mode quality.} Using features computed
+only from each estimation window (eigenvalue separation, half-life,
+autocorrelation, eigenvector stability, volatility, portfolio
+concentration) plus market-regime variables, we train walk-forward
+logistic, gradient-boosting and random-forest classifiers to predict
+which candidate modes will revert profitably over the next month. The
+signal is statistically significant but small (out-of-sample AUC
+0.51--0.53).
+
+\emph{A walk-forward strategy with regime integration.} We combine mode
+predictions with filtered hidden-Markov regime probabilities in a
+monthly re-estimated, market-neutral strategy, and evaluate returns,
+turnover, drawdowns and robustness to costs, execution delay and
+specification. Reversion is real before costs (gross Sharpe \GSREWB{}
+when trading the full spectrum) but costly to harvest, with break-even
+costs of only 1.7--2.5~bp per unit turnover. ML selection beats random selection
+but not equal weighting. The largest improvement comes from regime
+timing: reversion pays in stressed markets and loses in calm ones.
+
+Throughout, we report negative and null results alongside positive
+ones. The original specification in the accompanying code repository,
+a daily-return reversal on the top signal modes, has a gross Sharpe of
+\GSROrig{} on our data, and a central purpose of this paper is to
+explain why.

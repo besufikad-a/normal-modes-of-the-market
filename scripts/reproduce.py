@@ -32,9 +32,9 @@ from src.modes import decompose
 
 # --------------------------------------------------------------------- config
 
-CACHE_PATH = REPO_ROOT / "data" / "cache" / "sp500_prices.parquet"
+CACHE_PATH = REPO_ROOT / "data" / "cache" / "sp500_prices_2010_2024.parquet"
 OUTPUT_DIR = REPO_ROOT / "output"
-START_DATE = "2015-01-01"
+START_DATE = "2010-01-01"
 END_DATE = "2024-12-31"
 
 BACKTEST_CONFIG = dict(
@@ -54,8 +54,9 @@ def main() -> None:
     print("=" * 60)
     print("STEP 1: Load S&P 500 data")
     print("=" * 60)
-    tickers = get_sp500_tickers()
-    print(f"[data] {len(tickers)} tickers from Wikipedia")
+    tickers = [] if CACHE_PATH.exists() else get_sp500_tickers()
+    if tickers:
+        print(f"[data] {len(tickers)} tickers from Wikipedia")
 
     prices = download_prices(
         tickers, start=START_DATE, end=END_DATE, cache_path=CACHE_PATH

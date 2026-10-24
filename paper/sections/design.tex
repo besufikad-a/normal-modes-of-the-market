@@ -1,0 +1,121 @@
+\section{Data and walk-forward design}
+\label{sec:design}
+
+\input{sections/pipeline}
+
+\paragraph{Data.} We use daily dividend- and split-adjusted closing
+prices from Yahoo Finance for the \DataAssets{} current S\&P~500
+constituents with a complete price history from \DataStart{} to
+\DataEnd{} (\DataDays{} trading days of log returns). Restricting to
+current constituents with full histories introduces survivorship bias
+(Section~\ref{sec:limitations}). Interior gaps of up to five days are
+forward-filled; no other cleaning is applied.
+
+\paragraph{Episodes.} \Cref{fig:pipeline} summarizes the pipeline. The walk-forward is organized in \emph{episodes}.
+At re-estimation day $t$, the correlation matrix is estimated on the
+trailing window $[t-W,t)$ with $W=252$. Its eigenvectors and the asset
+volatilities $\sigma_i$ are frozen and traded over the holding period
+$[t,t+H)$ with $H=21$. The holding period equals the re-estimation step,
+so the episodes tile the sample without overlap: there are
+\NEpisodes{} episodes from January~2011. Everything recorded about the
+estimation window (features) uses data strictly before $t$, and
+everything recorded about the holding period (labels, PnL) uses data
+from $t$ on. Because episode $i$'s label is fully realized when episode
+$i+1$ begins, a model trained on episodes $<j$ can score episode $j$
+with no overlap between training labels and test data.
+
+\paragraph{Signal.} On each trading day $d$ of an episode, mode $k$'s
+position is the negative, clipped $z$-score of its cumulative price
+relative to the previous $L=60$ days,
+\begin{equation}
+  s_{k,d} = -\operatorname{clip}\!\left(
+    \frac{X_{k,d-1}-\bar X_{k}^{(L)}}{\operatorname{sd}(X_{k})^{(L)}},\,-3,\,3\right),
+  \label{eq:signal}
+\end{equation}
+where the mean and standard deviation are taken over days $d-L,\dots,d-1$.
+This bets that a displaced normal coordinate is pulled back toward its
+recent equilibrium. The original specification in the code repository,
+a $z$-score of the daily mode \emph{return} over 20 days, is a
+short-term reversal bet; we report it for comparison.
+
+\paragraph{Label.} The standalone forward PnL of mode $k$ in an episode
+is $\pi_k=\sum_{d=t}^{t+H-1}s_{k,d}\,r_{k,d}$. The binary label is
+$y_k=\mathbf 1\{\pi_k>0\}$: did trading the mode's reversion signal make
+money over the next month? This ties ``mean reversion'' directly to the
+quantity a strategy can monetize. As a purely statistical check we
+also report the out-of-sample lag-1 autocorrelation of mode returns.
+
+\paragraph{Candidate pools.} Mode~0 is the market mode in every window
+(its overlap with the normalized equal-weight vector is
+\FullOverlap{} in the full sample) and is never a candidate. We fixed
+\emph{Pool~A}, modes $1$--$30$, before seeing any out-of-sample
+result. It contains all signal modes ($n_s$ ranges from 3 to 11 across
+episodes) plus the first part of the noise bulk, and so lets the models
+learn whether the MP edge matters. \emph{Pool~B}, every non-degenerate
+mode ($1$--$249$), was added after the spectrum-wide test in
+Section~\ref{sec:spectrum}; results on Pool~B should be read with that
+in mind.
+
+\section{Predicting which modes revert}
+\label{sec:ml}
+
+\subsection{Features}
+
+Every feature is computed from the estimation window only.
+Table~\ref{tab:features} lists them by group. The groups follow the
+mechanisms discussed above: eigenvalue position (where the mode sits
+relative to the MP edge and its neighbours), estimated speed of
+reversion, serial dependence, eigenvector stability (whether the mode
+is the ``same'' portfolio from one month to the next), volatility
+regime of the mode, and portfolio concentration (whether the mode is a
+broad combination or a near-pair). We add the mode's trailing
+in-window reversion performance and, for the regime-aware models, the
+market-level state described in Section~\ref{sec:regimes}.
+
+\begin{table}[t]
+\centering\small
+\caption{Mode-level and market-level predictors. All are computed on the
+estimation window $[t-W,t)$ or, for regime variables, from data through
+the close of day $t-1$.}
+\label{tab:features}
+\begin{tabular}{@{}llp{8.4cm}@{}}
+\toprule
+Group & Feature & Definition \\
+\midrule
+Eigenvalue & \texttt{mode\_index} & rank $k$ \\
+separation & \texttt{lam\_over\_mp} & $\lambda_k/\lambda_+$ \\
+ & \texttt{log\_lambda} & $\log\lambda_k$ \\
+ & \texttt{eig\_gap} & $\min(\lambda_{k-1}-\lambda_k,\ \lambda_k-\lambda_{k+1})/\lambda_k$ \\
+Half-life & \texttt{log\_half\_life} & $\log$ of $\ln2/(-\ln b)$, $b$ the AR(1) slope of $X_k$ over the window (capped at 252 days) \\
+Autocorrelation & \texttt{ac1} & lag-1 autocorrelation of $r_k$ \\
+ & \texttt{vr5} & Lo--MacKinlay variance ratio VR(5) of $r_k$ \citep{lomackinlay1988} \\
+Stability & \texttt{stability} & $\max_j |v_k^{(t)\top}v_j^{(t-H)}|$ over the previous episode's modes \\
+Volatility & \texttt{vol\_ratio} & 21-day volatility of $r_k$ divided by $\sqrt{\lambda_k}$ \\
+Concentration & \texttt{participation} & $1/(N\sum_i v_{ik}^4)$, the effective fraction of assets in the mode \\
+ & \texttt{max\_weight} & largest $|v_{ik}/\sigma_i|$ as a share of $\sum_i|v_{ik}/\sigma_i|$ \\
+Trailing & \texttt{trail\_rev\_sharpe} & Sharpe ratio of the mode's signal \eqref{eq:signal} over the last 63 window days \\
+\midrule
+Regime & \texttt{p\_stress} & filtered HMM stress probability \\
+ & \texttt{log\_vol} & log 21-day realized volatility of the equal-weight market \\
+ & \texttt{avg\_corr} & 63-day average pairwise correlation \\
+ & \texttt{absorption} & $\lambda_0/N$, share of variance in the market mode \citep{kritzman2011} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Models and protocol}
+
+We compare an $\ell_2$-regularized logistic regression ($C=0.1$, features
+standardized), histogram gradient boosting (depth~3, 150 iterations,
+learning rate 0.05, minimum leaf size 50), and a random forest (300
+trees, minimum leaf size 25). Hyperparameters were set once to
+conservative values and not tuned. We pre-specified the logistic model
+as primary because the signal-to-noise ratio of the problem is low.
+Models are trained on an expanding window of all (episode, mode) rows
+from episodes $<j$ and score episode~$j$. The first prediction is made
+after \MinTrain{} episodes (about two years), so the out-of-sample
+period starts on \OOSStart{}. The logistic model is re-fit every
+episode and the tree ensembles every third episode. We report the
+out-of-sample AUC with 95\% confidence intervals from a bootstrap that
+resamples whole episodes, which respects the cross-sectional
+dependence among modes in the same month.

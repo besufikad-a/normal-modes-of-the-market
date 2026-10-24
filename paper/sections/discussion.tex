@@ -1,0 +1,94 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{What the normal-mode analogy gets right.} Taken seriously as
+an overdamped, thermally driven system, the coupled-oscillator picture
+predicts that the \emph{lowest}-variance eigenportfolios relax fastest.
+Out of sample, that ordering holds. Reversion profits and negative
+autocorrelation are concentrated at the bottom of the spectrum, and the
+market and sector modes at the top trend rather than revert. The
+analogy is therefore a useful guide to where to look, and it inverts
+the usual PCA habit of treating the leading components as the
+interesting ones.
+
+\paragraph{What it gets wrong.} The quantitative prediction, a half-life
+proportional to $\lambda_k$, is not supported. The reversion we
+measure is mostly a one-day effect that does not survive an extra day
+of execution delay. That is more naturally read as liquidity provision
+and microstructure noise \citep{lehmann1990,nagel2012} spread over many
+small-variance combinations of stocks than as slow relaxation toward an
+equilibrium.
+
+\paragraph{The Marchenko--Pastur filter is the wrong filter for this
+purpose.} RMT tells us which eigenvalues are distinguishable from noise,
+and that is the right question for covariance cleaning
+\citep{laloux1999,bunbouchaud2017}. For reversion trading, the relevant
+object is the low-variance \emph{subspace}. Individual bulk eigenvectors
+are unstable, but projecting onto many of them and trading them together
+diversifies away their individual instability. This explains why
+equal-weighting the whole bulk beats every selection rule we tried.
+
+\paragraph{Machine learning adds little; timing adds more.} With AUCs of
+0.51--0.53, the classifiers do find structure. They are significantly
+better than random selection, and stability, concentration and
+autocorrelation carry information. But their edge is smaller than the
+diversification cost of trading only a third of the pool. Regime
+information is more valuable as a \emph{timing} signal for the whole
+book than as a feature for ranking modes. The regime asymmetry is
+large: reversion is unprofitable in calm markets and profitable in
+stressed ones. Our overlay exploits it walk-forward, but its form was
+chosen after seeing this asymmetry.
+
+\paragraph{Multiple testing.} We report every strategy and variant we
+ran. Across them, the best net Sharpe ratio is below 0.2 over twelve
+years, so none would survive a deflated-Sharpe adjustment for the
+number of trials \citep{baileylopezdeprado2014}. The robust findings
+are the cross-spectrum pattern (\cref{tab:spectrum}), which involves
+no selection, and the regime asymmetry, which holds in every
+specification.
+
+\section{Limitations}
+\label{sec:limitations}
+
+\begin{itemize}
+\item \textbf{Survivorship.} The universe is the current S\&P~500
+  restricted to stocks with complete 2010--2024 histories (\DataAssets{}
+  names). This removes delisted and acquired firms. Survivorship
+  typically flatters long-only returns more than market-neutral
+  reversion, but it can also understate the tail risk of a reversion
+  book, which loses when a stock falls and never comes back.
+  Point-in-time constituents (e.g.\ CRSP) would fix this.
+\item \textbf{Execution.} Signals use closing prices and are traded at
+  the same close. The execution-delay test shows that this assumption
+  matters a great deal. The cost model is a flat charge per unit
+  turnover, with no market impact, borrow costs or financing.
+\item \textbf{Estimation.} We use sample correlations with a fixed
+  252-day window. Shrinkage or rotationally invariant estimators
+  \citep{bunbouchaud2017}, or eigenvector tracking across windows
+  rather than re-estimating from scratch, could make individual modes
+  more stable and selection more valuable.
+\item \textbf{Label.} The binary profitability label discards magnitude,
+  and the payoff is negatively skewed. Regression or quantile targets,
+  or a direct portfolio objective, might use the weak signal more
+  efficiently.
+\end{itemize}
+
+\section{Conclusion}
+
+We set out to test whether the low-eigenvalue normal modes of the
+equity correlation matrix mean-revert predictably, and whether
+supervised learning and regime detection can turn that into a
+statistical-arbitrage strategy. On 417 S\&P~500 stocks over 2013--2024,
+out of sample, the answers are as follows. Yes, mode portfolios
+mean-revert, but at the bottom of the spectrum rather than in the
+Marchenko--Pastur signal modes, and mostly at a one-day horizon. Only
+weakly can it be predicted which modes will revert: AUC 0.51--0.53,
+better than chance and better than random selection, but not better
+than holding everything. Market regimes predict \emph{when} reversion
+pays far better than mode features predict \emph{which} modes pay.
+After realistic costs, the best walk-forward implementation earns a
+small positive Sharpe ratio, \SRMLOverB{}, that depends on a
+data-informed overlay and on same-close execution. The
+coupled-oscillator analogy is a good map of where reversion lives in
+the spectrum. It is not, on this evidence, a source of tradable alpha
+for a daily close-to-close strategy.

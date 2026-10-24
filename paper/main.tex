@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{cleveref}
+
+\captionsetup{font=small,labelfont=bf}
+\graphicspath{{figures/}}
+\input{numbers}
+
+\title{Normal Modes of the Market:\\
+Mean Reversion Across the Correlation Spectrum,\\
+Machine-Learned Mode Selection, and Regimes}
+\author{Besufikad\thanks{University of Chicago. Code and data pipeline:
+\url{https://github.com/besufikad-a/normal-modes-of-the-market}.}}
+\date{Working paper --- October 2026}
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+\input{sections/intro}
+\input{sections/theory}
+\input{sections/design}
+\input{sections/regimes_method}
+\input{sections/results}
+\input{sections/discussion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

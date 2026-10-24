@@ -26,11 +26,22 @@ data/cache/
 *.h5
 
 # Outputs
-output/
-figures/
+/output/
+/figures/
 *.png
 *.pdf
 !paper/*.pdf
+!paper/figures/*.pdf
+
+# LaTeX build files
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
 
 # Editor / OS
 .vscode/
@@ -42,3 +53,4 @@ figures/
 .pytest_cache/
 .coverage
 htmlcov/
+paper/main.pdf

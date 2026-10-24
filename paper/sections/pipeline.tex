@@ -1,0 +1,35 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=4mm and 6mm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
+              minimum height=7mm, inner sep=3pt, fill=gray!6},
+  arr/.style={-{Latex[length=2mm]}, semithick}]
+  \node[box] (ret) {S\&P 500 daily returns\\(data through $t-1$)};
+  \node[box, below left=5mm and -6mm of ret] (corr) {Rolling correlation\\$W=252$ days};
+  \node[box, below=of corr] (eig) {Eigen-decomposition\\+ MP edge $\lambda_+$};
+  \node[box, below=of eig] (modes) {Candidate modes\\(Pool A / Pool B)};
+  \node[box, below=of modes] (mf) {Mode features\\(Table~\ref{tab:features})};
+  \node[box, below right=5mm and -6mm of ret] (mk) {Market features\\vol, corr, dispersion};
+  \node[box, below=of mk] (hmm) {2-state HMM,\\filtered $P(\text{stress})$};
+  \node[box, below=10mm of mf, xshift=22mm] (ml) {Walk-forward ML\\$\hat P(\text{mode reverts})$};
+  \node[box, below=of ml] (port) {Top third; risk-parity mode portfolio;\\regime exposure overlay};
+  \node[box, below=of port] (wf) {Hold $H=21$ days, then re-estimate};
+  \draw[arr] (ret) -- (corr);
+  \draw[arr] (ret) -- (mk);
+  \draw[arr] (corr) -- (eig);
+  \draw[arr] (eig) -- (modes);
+  \draw[arr] (modes) -- (mf);
+  \draw[arr] (mk) -- (hmm);
+  \draw[arr] (mf) -- (ml);
+  \draw[arr] (hmm) -- (ml);
+  \draw[arr] (hmm.east) -- ++(4mm,0) |- (port.east);
+  \draw[arr] (ml) -- (port);
+  \draw[arr] (port) -- (wf);
+  \draw[arr, dashed] (wf.west) -- ++(-30mm,0) |- (ret.west);
+\end{tikzpicture}
+\caption{Pipeline. Each arrow uses only information available at the
+close before the episode starts. The dashed arrow marks the monthly
+walk-forward step.}
+\label{fig:pipeline}
+\end{figure}

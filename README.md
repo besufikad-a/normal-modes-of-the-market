@@ -1,120 +1,115 @@
 # Normal Modes of the Market
 
-Code accompanying the working paper *Normal Modes of the Market*, which
-connects the coupled-oscillator normal-mode decomposition from classical
-mechanics to statistical arbitrage in equity markets.
+Code and working paper for *Normal Modes of the Market: Mean Reversion
+Across the Correlation Spectrum, Machine-Learned Mode Selection, and
+Regimes* — [`paper/normal-modes-of-the-market.pdf`](paper/normal-modes-of-the-market.pdf).
 
-## Thesis
+## Question
 
-A system of `N` coupled harmonic oscillators with symmetric coupling
-matrix `K` is diagonalized by finding its eigenvectors — the **normal
-modes** — each of which oscillates independently at a fixed frequency.
-Modes with the smallest restoring frequencies are the slowest to
-equilibrate and dominate long-time dynamics; modes with the largest are
-the fastest to relax back to equilibrium.
+A system of coupled oscillators decomposes into independent **normal
+modes**. The eigenvectors of an equity correlation matrix are the market
+analogue: portfolios with in-sample uncorrelated returns. In the
+overdamped (Ornstein–Uhlenbeck) limit of a coupled-oscillator market the
+covariance is the inverse of the stiffness matrix, so the
+**lowest-variance modes should mean-revert fastest**. The project:
 
-The analogue in equity markets is the return covariance matrix `Σ`. Its
-eigenvectors are portfolios whose returns are (in-sample) uncorrelated,
-and its eigenvalues are the variances carried by each portfolio. The
-top eigenvector is empirically close to the equal-weighted market
-portfolio; intermediate eigenvectors correspond to sector-like
-groupings; the smallest non-noise eigenvectors — those above the
-Marchenko–Pastur bound but far below the market mode — are near-
-stationary linear combinations of assets that mean-revert.
+1. Tests whether low-eigenvalue modes of the S&P 500 correlation
+   structure exhibit predictable mean reversion, using Marchenko–Pastur
+   filtering to identify candidate signal modes.
+2. Trains supervised models (logistic, gradient boosting, random forest)
+   to predict which candidate modes will mean-revert, from eigenvalue
+   separation, half-life, autocorrelation, eigenvector stability,
+   volatility, and portfolio concentration (plus regime variables).
+3. Integrates mode predictions and HMM regime probabilities into a
+   walk-forward statistical-arbitrage strategy and evaluates
+   out-of-sample returns, turnover, drawdown, and robustness.
 
-The paper argues that these low-eigenvalue signal modes are the natural
-building blocks of a statistical arbitrage portfolio, and that the
-Marchenko–Pastur bound provides a principled way to separate them from
-noise.
+## Findings (417 stocks, out of sample 2013–2024)
 
-## What this repo does
+| | Result |
+|---|---|
+| Above-MP "signal" modes | **Do not revert** (level-reversion Sharpe 0.07, t = 0.26) |
+| Noise-bulk modes (100–174) | **Revert** (Sharpe 0.87, t = 2.7; daily lag-1 autocorrelation −0.057, \|t\| > 20) |
+| OU half-life ∝ λ prediction | Not supported (slope −0.14 vs. predicted +1) |
+| ML: which modes revert? | Weakly predictable, AUC 0.51–0.53 (95% CI excludes 0.5 for 5 of 6 models on modes 1–30) |
+| ML vs. random selection | Better (full spectrum: beats 200/200 random draws) |
+| ML vs. holding every mode | Not better (Sharpe difference +0.03, p = 0.46) |
+| Regimes | Reversion pays in the high-vol / high-correlation state and loses in calm markets |
+| Best walk-forward strategy | ML + regime overlay, full spectrum: gross Sharpe 0.95, **net 0.19 at 2 bp**, max DD −6.7% |
+| Original repo spec (daily-return reversal on top signal modes) | Gross Sharpe −0.53, net −1.53 |
 
-1. Downloads S&P 500 daily prices from Yahoo Finance.
-2. Decomposes the return correlation matrix into normal modes.
-3. Identifies signal modes using the Marchenko–Pastur upper bound.
-4. Interprets the top mode empirically (market factor).
-5. Runs a walk-forward backtest of a mode-reversion stat arb strategy.
-6. Reports Sharpe, drawdown, turnover, and per-mode contributions.
+Gross reversion is real but break-even costs are only ~1.7–2.5 bp per
+unit turnover, and one extra day of execution delay roughly halves the
+gross Sharpe. The regime overlay's form was chosen after observing the
+regime asymmetry (disclosed in the paper). See the paper for full
+tables, robustness checks and caveats.
+
+> An earlier version of this README listed "indicative" results
+> (gross Sharpe 0.8–1.4) that did not come from a run of this code.
+> All numbers above are produced by `scripts/run_study.py`.
 
 ## Install
 
 ```bash
-git clone https://github.com/<your-username>/normal-modes-of-the-market.git
+git clone https://github.com/besufikad-a/normal-modes-of-the-market.git
 cd normal-modes-of-the-market
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Python 3.10+ recommended.
+Python 3.10+.
 
 ## Run
 
 ```bash
-python scripts/reproduce.py
+python scripts/run_study.py        # full study, ~10 min (add --quick to skip robustness)
+python scripts/make_macros.py      # regenerate the numbers quoted in the paper
+cd paper && latexmk -pdf main.tex  # build the paper
+python -m pytest tests/            # unit + look-ahead tests
 ```
 
-The script downloads data (cached locally after the first run),
-decomposes modes, runs the backtest, and prints a summary. Outputs
-(figures, PnL series) are saved to `output/`.
+`run_study.py` downloads prices from Yahoo Finance on first run (cached
+in `data/cache/`), and writes figures to `paper/figures/`, LaTeX tables
+to `paper/tables/`, and every reported number to `output/results.json`.
 
-For an interactive walkthrough, see `notebooks/reproduce.ipynb` (also
-buildable from `scripts/reproduce.py`).
+`scripts/reproduce.py` runs the original baseline backtest only.
 
 ## Repo structure
 
 ```
 normal-modes-of-the-market/
-├── paper/                  # Working paper PDF
+├── paper/
+│   ├── normal-modes-of-the-market.pdf   # the working paper
+│   ├── main.tex, sections/, references.bib
+│   ├── figures/, tables/                # generated by run_study.py
+│   └── numbers.tex                      # generated by make_macros.py
 ├── src/
-│   ├── data.py             # S&P 500 loader (yfinance)
-│   ├── modes.py            # Covariance decomposition + Marchenko–Pastur
-│   ├── strategy.py         # Mode-reversion signal + portfolio construction
-│   └── backtest.py         # Walk-forward backtest + metrics
+│   ├── data.py          # S&P 500 loader (yfinance), cleaning
+│   ├── modes.py         # Correlation decomposition + Marchenko–Pastur
+│   ├── episodes.py      # Walk-forward episodes: mode signals, features, labels
+│   ├── regime.py        # Market features + Gaussian HMM (filtered, walk-forward)
+│   ├── selection.py     # Walk-forward ML (logit / GBM / RF), AUC bootstrap
+│   ├── mode_backtest.py # Mode portfolios, costs, metrics, bootstrap tests
+│   ├── strategy.py      # Original mode-reversion signal (baseline)
+│   └── backtest.py      # Original walk-forward backtest (baseline)
 ├── scripts/
-│   └── reproduce.py        # End-to-end reproduction entry point
-├── tests/
-│   └── test_modes.py       # Sanity tests for the decomposition
-└── notebooks/
-    └── reproduce.ipynb     # Interactive version of reproduce.py
+│   ├── run_study.py     # Full study → figures, tables, results.json
+│   ├── make_macros.py   # results.json → paper/numbers.tex
+│   └── reproduce.py     # Original baseline only
+└── tests/
+    ├── test_modes.py    # Decomposition / baseline sanity tests
+    └── test_study.py    # Look-ahead and correctness tests for the study
 ```
-
-## Results (indicative)
-
-The backtest is intentionally simple — no factor hedging beyond
-excluding the top mode, no shrinkage beyond MP cleaning, no cross-
-sectional volatility normalization at the asset level. Reported
-numbers are indicative of the framework's raw signal and should not be
-interpreted as a production strategy.
-
-Typical output on 2015–2024 S&P 500 data:
-
-| Metric               | Value       |
-|----------------------|-------------|
-| Gross Sharpe         | ~0.8–1.4    |
-| Net Sharpe (1bps)    | ~0.3–0.8    |
-| Avg daily turnover   | ~30–50%     |
-| Max drawdown         | ~-8 to -15% |
-
-Exact numbers vary with universe, sample period, and hyperparameters.
-See `scripts/reproduce.py` for the specific configuration.
 
 ## Caveats
 
-- Universe is the *current* S&P 500 constituents, which introduces
-  survivorship bias. Correcting this requires point-in-time membership
-  data (e.g., CRSP), which is not free.
-- Transaction cost model is a flat basis-point charge on turnover;
-  realistic costs depend on market impact, borrow, and financing.
-- Covariance is estimated on a rolling window with monthly re-
-  estimation; more sophisticated regime-aware estimators would likely
-  improve stability.
-
-These are all fixable with better data and more careful modeling. The
-purpose of this repo is to demonstrate the framework, not to ship a
-production strategy.
-
-## Reference
-
-Working paper: `paper/normal-modes-of-the-market.pdf`
+- **Survivorship bias:** the universe is the *current* S&P 500 restricted
+  to names with complete 2010–2024 histories. Point-in-time membership
+  (e.g. CRSP) would remove this.
+- **Execution:** signals use closing prices and trade at the same close;
+  costs are a flat bp charge on turnover (no impact, borrow, financing).
+- **Multiple testing:** every variant run is reported; none of the net
+  Sharpe ratios would survive a deflated-Sharpe adjustment.
 
 ## License
 

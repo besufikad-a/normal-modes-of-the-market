@@ -1,0 +1,14 @@
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{2}{c}{Level reversion} & \multicolumn{2}{c}{Return reversal} & \multicolumn{2}{c}{OOS lag-1 AC} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Modes & Sharpe & $t_{NW}$ & Sharpe & $t_{NW}$ & $\bar\rho_1$ & $t$ \\
+\midrule
+Market ($k=0$) & -0.09 & -0.33 & 0.18 & 0.56 & -0.066 & -4.06 \\
+Signal, above MP ($1..n_s-1$) & 0.07 & 0.26 & -0.57 & -1.96 & -0.047 & -6.33 \\
+Edge bulk ($n_s..n_s+24$) & -0.00 & -0.02 & -0.25 & -0.71 & -0.054 & -12.05 \\
+Upper bulk ($n_s+25..99$) & 0.54 & 1.86 & 0.63 & 2.89 & -0.057 & -21.71 \\
+Middle bulk ($100..174$) & 0.87 & 2.74 & 1.10 & 4.07 & -0.057 & -21.66 \\
+Lower bulk ($175..249$) & 0.70 & 2.39 & 0.95 & 3.14 & -0.056 & -22.15 \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,26 @@
+\begin{abstract}
+\noindent
+We test whether the normal modes of the U.S. equity correlation matrix
+exhibit predictable mean reversion. In the overdamped limit of a
+coupled-oscillator market, the covariance matrix is the inverse of the
+stiffness matrix, so the lowest-variance eigenportfolios should relax
+fastest. Using \DataAssets{} S\&P~500 stocks, monthly walk-forward
+re-estimation and out-of-sample data from 2013 to 2024, we find that the
+modes the Marchenko--Pastur filter certifies as signal do not revert
+(Sharpe \SRSignalLevel), while modes deep in the noise bulk do (Sharpe
+up to \SRMiddleLevel, $t=\TMiddleLevel$), with significantly negative
+daily autocorrelation. Supervised models using eigenvalue separation,
+half-life, autocorrelation, eigenvector stability, volatility,
+portfolio concentration and regime features predict which modes will
+revert with out-of-sample AUC of 0.51--0.53: significant, and better
+than random selection, but not better than holding every mode. A
+two-state hidden Markov model reveals a strong regime asymmetry:
+reversion profits arise in high-volatility, high-correlation states and
+reverse in calm ones. A walk-forward strategy combining mode
+predictions with regime-based exposure reaches a net Sharpe ratio of
+\SRMLOverB{} at 2~bp costs. That result depends on same-close execution
+and on an overlay whose form was chosen after observing the regime
+asymmetry. Overall, the normal-mode picture locates mean reversion
+correctly in the spectrum, but after costs, and once the specifications
+we tried are taken into account, it provides little tradable alpha.
+\end{abstract}

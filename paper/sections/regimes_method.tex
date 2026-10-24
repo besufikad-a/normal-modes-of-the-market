@@ -1,0 +1,25 @@
+\section{Market regimes}
+\label{sec:regimes}
+
+Statistical-arbitrage returns are known to depend on the market
+environment. Reversion profits are typically higher when dispersion is
+high, and they can collapse in crowded deleveraging episodes
+\citep{khandani2011}. We summarize the environment with three daily
+features computed from data through day~$d$: the log 21-day realized
+volatility of the equal-weight market return; the 63-day average
+pairwise correlation; and the log 21-day average cross-sectional return
+dispersion. The average correlation is obtained without forming any
+matrix. For $N$ unit-variance assets with average correlation
+$\bar\rho$, the cross-sectional mean of volatility-standardized returns
+has variance $\bar\rho + (1-\bar\rho)/N$, which we invert.
+
+A two-state Gaussian hidden Markov model \citep{hamilton1989} with
+diagonal covariances is fit by Baum--Welch \citep{rabiner1989}. To
+avoid look-ahead, the model is refit once a year on all data before
+1~January, with features standardized using that training set's
+moments. The probabilities passed downstream are \emph{filtered}
+(forward-algorithm) probabilities $P(\text{stress}\mid x_{1:d})$, never
+smoothed ones. States are ordered by mean volatility, so state~1 is
+always the high-volatility state, and the stress probability on the
+day before an episode starts enters both the ML models (as a feature)
+and the portfolio (as an exposure overlay).

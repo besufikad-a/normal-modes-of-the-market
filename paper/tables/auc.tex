@@ -1,0 +1,17 @@
+\begin{tabular}{llcc}
+\toprule
+Pool & Model & Mode features & Mode + regime features \\
+\midrule
+Modes 1--30 & Logistic (L2) & 0.523 [0.506, 0.540] & 0.521 [0.501, 0.537] \\
+ & Gradient boosting & 0.518 [0.502, 0.535] & 0.518 [0.499, 0.538] \\
+ & Random forest & 0.524 [0.508, 0.543] & 0.528 [0.509, 0.545] \\
+ & Heuristic: $-\log$ half-life & \multicolumn{2}{c}{0.512} \\
+ & Heuristic: $-\log\lambda$ & \multicolumn{2}{c}{0.504} \\
+\midrule
+Full spectrum & Logistic (L2) & 0.508 [0.500, 0.515] & 0.514 [0.505, 0.522] \\
+ & Gradient boosting & 0.506 [0.501, 0.512] & 0.504 [0.497, 0.512] \\
+ & Random forest & 0.507 [0.500, 0.513] & 0.512 [0.505, 0.520] \\
+ & Heuristic: $-\log$ half-life & \multicolumn{2}{c}{0.512} \\
+ & Heuristic: $-\log\lambda$ & \multicolumn{2}{c}{0.493} \\
+\bottomrule
+\end{tabular}

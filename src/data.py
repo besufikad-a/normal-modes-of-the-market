@@ -20,8 +20,14 @@ def get_sp500_tickers() -> list[str]:
     Yahoo Finance uses ``-`` instead of ``.`` for tickers like BRK.B
     (``BRK-B``) and BF.B (``BF-B``), so we substitute accordingly.
     """
-    tables = pd.read_html(SP500_WIKI_URL)
-    df = tables[0]
+    # Wikipedia returns 403 to urllib's default user agent.
+    from io import StringIO
+    from urllib.request import Request, urlopen
+
+    req = Request(SP500_WIKI_URL, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(req) as resp:
+        html = resp.read().decode("utf-8")
+    df = pd.read_html(StringIO(html))[0]
     tickers = df["Symbol"].astype(str).str.replace(".", "-", regex=False).tolist()
     return sorted(set(tickers))
 
@@ -83,10 +89,11 @@ def download_prices(
         prices = data[["Close"]].copy()
         prices.columns = tickers[:1]
 
-    # Drop tickers with too much missing data
-    threshold = int(0.9 * len(prices))
-    prices = prices.dropna(axis=1, thresh=threshold)
-    prices = prices.ffill().dropna()
+    # Drop tickers with too much missing data. Note: a plain
+    # ``ffill().dropna()`` here would drop every *row* before the latest
+    # listing date in the universe, silently truncating the sample, so
+    # we drop late-listed *columns* instead (see ``clean_prices``).
+    prices = clean_prices(prices)
 
     if cache_path is not None:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,6 +102,19 @@ def download_prices(
     if verbose:
         print(f"[data] downloaded: {prices.shape[0]} days × {prices.shape[1]} tickers")
     return prices
+
+
+def clean_prices(prices: pd.DataFrame, max_gap: int = 5) -> pd.DataFrame:
+    """Keep tickers with a complete history over the full date range.
+
+    Interior gaps of up to ``max_gap`` days are forward-filled; any
+    ticker that is still missing data (late listing, early delisting,
+    long halts) is dropped. Rows are never dropped, so the sample keeps
+    its requested start date.
+    """
+    prices = prices.dropna(axis=0, how="all")
+    prices = prices.ffill(limit=max_gap)
+    return prices.dropna(axis=1, how="any")
 
 
 def compute_returns(prices: pd.DataFrame, method: str = "log") -> pd.DataFrame:

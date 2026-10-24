@@ -1,0 +1,126 @@
+\section{Normal modes: from coupled oscillators to the return covariance}
+\label{sec:theory}
+
+\subsection{Coupled oscillators}
+
+Consider $N$ unit masses with displacements $x\in\mathbb{R}^N$ coupled by
+springs with a symmetric positive-definite stiffness matrix $K$,
+\begin{equation}
+  \ddot{x} = -Kx .
+  \label{eq:oscillator}
+\end{equation}
+Writing $K = U\Omega^2U^\top$ with $U$ orthogonal and
+$\Omega^2 = \operatorname{diag}(\omega_1^2,\dots,\omega_N^2)$, the normal
+coordinates $\xi = U^\top x$ decouple, $\ddot\xi_k = -\omega_k^2\xi_k$,
+and every motion of the system is a superposition of $N$ independent
+oscillations \citep{goldstein2002}. Two features of this textbook result
+carry over to markets: the decomposition is \emph{orthogonal}, so
+normal coordinates can be traded as separate portfolios, and each mode
+has its own \emph{time scale}, $2\pi/\omega_k$.
+
+\subsection{The overdamped analogue: an Ornstein--Uhlenbeck market}
+
+Prices are not inertial, so the relevant limit of
+\eqref{eq:oscillator} is the overdamped one with thermal forcing. Let
+$x_t$ denote a vector of log-price deviations from some slowly moving
+equilibrium (for instance, idiosyncratic mispricings relative to a
+factor model) and suppose
+\begin{equation}
+  \mathrm{d}x_t = -K x_t\,\mathrm{d}t + s\,\mathrm{d}W_t ,
+  \label{eq:ou}
+\end{equation}
+a multivariate Ornstein--Uhlenbeck process \citep{uhlenbeck1930} with
+isotropic noise of intensity $s^2$. The normal coordinates of $K$ are
+again independent, now as scalar OU processes,
+\begin{equation}
+  \mathrm{d}\xi_{k,t} = -\omega_k^2\,\xi_{k,t}\,\mathrm{d}t + s\,\mathrm{d}W_{k,t},
+\end{equation}
+each relaxing toward equilibrium at rate $\kappa_k=\omega_k^2$ (half-life
+$\ln 2/\omega_k^2$). The stationary covariance $\Sigma$ solves the
+Lyapunov equation $K\Sigma + \Sigma K = s^2 I$, which gives
+\begin{equation}
+  \Sigma = \frac{s^2}{2}\,K^{-1}
+  \quad\Longrightarrow\quad
+  \Sigma \text{ and } K \text{ share eigenvectors, with }
+  \lambda_k = \frac{s^2}{2\,\omega_k^2}.
+  \label{eq:equipartition}
+\end{equation}
+Equation~\eqref{eq:equipartition} is equipartition: soft modes (small
+$\omega_k$) fluctuate a lot, stiff modes fluctuate little. It also turns
+the covariance matrix into a map of relaxation speeds,
+\begin{equation}
+  \kappa_k \;=\; \frac{s^2}{2\lambda_k},
+  \qquad
+  \text{half-life}_k \;=\; \frac{2\ln 2}{s^2}\,\lambda_k .
+  \label{eq:prediction}
+\end{equation}
+In this idealized market, \textbf{the lowest-variance eigenportfolios
+are the fastest to mean-revert}, and the log half-life should increase
+one-for-one with $\log\lambda_k$. This is the prediction we take to the
+data. It is the opposite of the usual reading of a principal-component
+spectrum, in which the large eigenvalues are ``signal'' and the small
+ones are noise to be discarded.
+
+Two caveats matter. First, \eqref{eq:ou} describes \emph{levels};
+we observe daily returns $r_t\approx \mathrm{d}x_t$, whose covariance
+is dominated by the noise term $s^2 I$ at short horizons. The
+eigenstructure of the return covariance reflects the drift term only
+through the (weak) autocorrelation of returns. The model is therefore
+a heuristic for where reversion should be found, not a structural
+model of the return covariance. Second, real return covariances are
+dominated by a market mode and a handful of sector modes whose
+eigenvalues are far larger than any OU drift could produce. We
+interpret these as common factors (non-stationary, $\omega_k\to 0$)
+and exclude the market mode from every strategy.
+
+\subsection{Mode portfolios}
+
+We work with the correlation matrix of returns standardized by their
+in-window volatilities $\sigma_i$. Its eigenvectors $v_k$ (columns of
+$V$, ordered by descending eigenvalue $\lambda_0\ge\lambda_1\ge\dots$)
+define mode returns
+\begin{equation}
+  r_{k,t} \;=\; \sum_i v_{ik}\,\frac{r_{i,t}}{\sigma_i},
+  \qquad \operatorname{Var}(r_k)\approx\lambda_k \text{ in-sample},
+  \label{eq:mode-return}
+\end{equation}
+which are the returns of the tradable portfolios with asset weights
+$v_{ik}/\sigma_i$ \citep{avellaneda2010}. The cumulative mode ``price''
+$X_{k,t}=\sum_{s\le t} r_{k,s}$ is the empirical counterpart of the
+normal coordinate $\xi_k$.
+
+\section{Separating signal from noise: Marchenko--Pastur}
+\label{sec:rmt}
+
+With $T$ observations of $N$ assets, sample eigenvalues are biased and
+noisy even when the true correlation matrix is the identity. In the
+limit $N,T\to\infty$ with $q=N/T$ fixed, the eigenvalues of a pure-noise
+correlation matrix follow the Marchenko--Pastur law
+\citep{marchenko1967},
+\begin{equation}
+  \rho(\lambda) = \frac{\sqrt{(\lambda_+-\lambda)(\lambda-\lambda_-)}}{2\pi q\lambda},
+  \qquad
+  \lambda_\pm = (1\pm\sqrt q)^2,
+  \label{eq:mp}
+\end{equation}
+with an additional point mass of weight $1-1/q$ at zero when $q>1$.
+Eigenvalues above $\lambda_+$ are inconsistent with pure noise; following
+\citet{laloux1999} and \citet{plerou2002}, we call them \emph{signal
+modes} and denote their number by $n_s$. In our rolling windows
+($N=417$, $T=252$, $q\approx1.65$) the edge is $\lambda_+\approx 5.2$ and
+the sample has rank $T-1=251$.
+
+The MP edge is a statement about eigenvalues. For trading, the stability
+of eigen\emph{vectors} matters more. Spiked-model theory
+\citep{benaych2011} shows that a population eigenvalue just above the
+detection threshold produces a sample eigenvector that is only weakly
+aligned with its population counterpart, and below the threshold the
+alignment is asymptotically zero. Read literally, this argues for
+trading only modes well above $\lambda_+$. Read together with
+\eqref{eq:prediction}, it creates a tension that the paper is designed
+to resolve empirically. The modes that RMT certifies as real are the
+\emph{soft} ones that should revert slowly. The modes that the OU
+picture says should revert fastest sit at the bottom of the spectrum,
+inside the noise bulk, where individual eigenvectors are unreliable. Even
+so, the subspace they span (the directions of least variance in the
+market) can be stable.
