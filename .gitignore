@@ -54,3 +54,9 @@ paper/*.synctex.gz
 .coverage
 htmlcov/
 paper/main.pdf
+
+# Animations
+.venv-anim/
+animations/media/
+animations/logs_*.txt
+animations/__pycache__/

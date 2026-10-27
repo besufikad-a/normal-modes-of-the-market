@@ -4,6 +4,10 @@ Code and working paper for *Normal Modes of the Market: Mean Reversion
 Across the Correlation Spectrum, Machine-Learned Mode Selection, and
 Regimes* — [`paper/normal-modes-of-the-market.pdf`](paper/normal-modes-of-the-market.pdf).
 
+**Animated explainer (Manim):** [`animations/normal_modes_of_the_market.mp4`](animations/normal_modes_of_the_market.mp4)
+— fifty years of stocks, bonds and gold, coupled oscillators for N = 2…16, and the
+market's own modes, with 3-D views. See [`animations/README.md`](animations/README.md).
+
 ## Question
 
 A system of coupled oscillators decomposes into independent **normal
@@ -92,6 +96,7 @@ normal-modes-of-the-market/
 │   ├── mode_backtest.py # Mode portfolios, costs, metrics, bootstrap tests
 │   ├── strategy.py      # Original mode-reversion signal (baseline)
 │   └── backtest.py      # Original walk-forward backtest (baseline)
+├── animations/          # Manim scenes, data prep, rendered videos
 ├── scripts/
 │   ├── run_study.py     # Full study → figures, tables, results.json
 │   ├── make_macros.py   # results.json → paper/numbers.tex
