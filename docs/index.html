@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Normal Modes of the Market — interactive</title>
+<meta name="description" content="Coupled oscillators, correlation and mean reversion in the U.S. equity market — interactive explorations of a working paper.">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script defer src="js/util.js"></script>
+<script defer src="js/history.js"></script>
+<script defer src="js/oscillators.js"></script>
+<script defer src="js/chain.js"></script>
+<script defer src="js/market.js"></script>
+<script defer src="js/spectrum.js"></script>
+<script defer src="js/strategy.js"></script>
+<script defer src="js/main.js"></script>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="#top">Normal Modes of the Market</a>
+  <div class="links">
+    <a href="#history">50 years</a>
+    <a href="#two">N = 2</a>
+    <a href="#chain">N beads</a>
+    <a href="#market">Market modes</a>
+    <a href="#spectrum">Spectrum</a>
+    <a href="#reversion">Reversion</a>
+    <a href="#lab">Strategy lab</a>
+    <a href="#film">Film</a>
+  </div>
+</nav>
+
+<header id="top" class="hero">
+  <p class="eyebrow">Working paper · interactive companion</p>
+  <h1>Normal Modes of the Market</h1>
+  <p class="lede">A system of coupled oscillators splits into independent <em>normal modes</em>.
+    The eigenvectors of a stock-correlation matrix are the market's version: portfolios that move
+    independently. If the market behaves like overdamped oscillators driven by noise, the
+    <strong>lowest-variance modes should revert fastest</strong>. This page lets you play with
+    the physics, the data, and what the paper found when it tested the idea out of sample
+    (417 S&amp;P&nbsp;500 stocks, 2013–2024).</p>
+  <div class="tiles" id="tiles"></div>
+  <div class="cta">
+    <a class="btn" href="media/normal-modes-of-the-market.pdf">Read the paper (PDF)</a>
+    <a class="btn ghost" href="https://github.com/besufikad-a/normal-modes-of-the-market">Code on GitHub</a>
+    <a class="btn ghost" href="#film">Watch the film</a>
+  </div>
+</header>
+
+<main>
+
+<section id="history">
+  <h2><span class="num">1</span> Fifty years of three assets</h2>
+  <p>Growth of $1 in the S&amp;P&nbsp;500 (price index), a constant-maturity 10-year Treasury
+    (total return rebuilt from yields), and gold, 1975–2026, with rolling correlations underneath.
+    Change the window and watch the stock–bond correlation flip sign around 2000 and again in 2022.</p>
+  <div class="controls">
+    <label>Rolling window <input type="range" id="h-win" min="12" max="120" step="6" value="36"> <output id="h-win-o">36</output> months</label>
+    <label><input type="checkbox" id="h-log" checked> log scale</label>
+    <label><input type="checkbox" class="h-asset" value="stock" checked> <span class="sw stock"></span>Stocks</label>
+    <label><input type="checkbox" class="h-asset" value="bond" checked> <span class="sw bond"></span>Bonds</label>
+    <label><input type="checkbox" class="h-asset" value="gold" checked> <span class="sw gold"></span>Gold</label>
+  </div>
+  <div id="h-plot" class="plot tall"></div>
+  <h3>Every month as a point, with time running upward</h3>
+  <p>Each point is one month: one axis is one asset's return, another is the other asset's return, and the vertical
+    axis is time. Colour shows the rolling correlation at that date (red: moving together; blue: hedging).
+    Drag to rotate, and look at the tilt of the cloud decade by decade.</p>
+  <div class="controls">
+    <label>Pair
+      <select id="h3-pair">
+        <option value="stock,bond">stocks vs. bonds</option>
+        <option value="stock,gold">stocks vs. gold</option>
+        <option value="bond,gold">bonds vs. gold</option>
+      </select></label>
+  </div>
+  <div id="h3-plot" class="plot square"></div>
+</section>
+
+<section id="two">
+  <h2><span class="num">2</span> Two coupled oscillators (N = 2)</h2>
+  <p>Stocks and bonds as two masses tied to walls by springs <span class="k">k</span> and to each other by a coupling
+    spring <span class="k">k꜀</span>. Any motion is a mix of two normal modes: <b class="c-stock">in-phase</b>
+    (the coupling never stretches, so it is slow) and <b class="c-red">out-of-phase</b> (the coupling stretches, so it
+    is stiffer and faster). Drag a mass to set it moving, or use the buttons.</p>
+  <div class="grid2">
+    <div>
+      <canvas id="osc-canvas" class="canvas" width="900" height="230"></canvas>
+      <canvas id="osc-trace" class="canvas" width="900" height="300"></canvas>
+    </div>
+    <div class="panel">
+      <label>spring k <input type="range" id="osc-k" min="0.2" max="3" step="0.05" value="1"><output id="osc-k-o"></output></label>
+      <label>coupling k꜀ <input type="range" id="osc-kc" min="0" max="2" step="0.05" value="0.6"><output id="osc-kc-o"></output></label>
+      <label>damping γ <input type="range" id="osc-g" min="0" max="0.4" step="0.01" value="0"><output id="osc-g-o"></output></label>
+      <div class="btnrow">
+        <button data-osc="mode1">Mode 1 only</button>
+        <button data-osc="mode2">Mode 2 only</button>
+        <button data-osc="push">Push stocks only</button>
+        <button data-osc="pause" id="osc-pause">Pause</button>
+      </div>
+      <div class="readout" id="osc-read"></div>
+      <p class="small">Bottom plot: displacement of each mass (solid) and the two modal coordinates
+        <span class="math">\(q = V^\top x\)</span> (dashed). Pushing only one mass excites both modes at once, and the
+        energy beats back and forth between the masses.</p>
+    </div>
+  </div>
+
+  <h3>From springs to correlation</h3>
+  <p>For two standardized assets the correlation matrix is
+    <span class="math">\(C=\begin{pmatrix}1&amp;\rho\\\rho&amp;1\end{pmatrix}\)</span>. Its eigenvectors are
+    <em>always</em> <span class="math">\((1,1)/\sqrt2\)</span> and <span class="math">\((1,-1)/\sqrt2\)</span>, the same
+    shapes as the two oscillator modes, with variances <span class="math">\(\lambda_{1,2}=1\pm\rho\)</span>.
+    Move ρ, or replay the real stock–bond history.</p>
+  <div class="grid2">
+    <div id="rho-plot" class="plot"></div>
+    <div class="panel">
+      <label>ρ <input type="range" id="rho" min="-0.95" max="0.95" step="0.01" value="0.4"><output id="rho-o"></output></label>
+      <div class="btnrow"><button id="rho-play">▶ Replay stocks–bonds 1978–2026</button></div>
+      <div class="readout big" id="rho-read"></div>
+      <div id="rho-bars" class="plot short"></div>
+    </div>
+  </div>
+</section>
+
+<section id="chain">
+  <h2><span class="num">3</span> N oscillators: beads on a string</h2>
+  <p>N equal beads on a string fixed at both ends. The stiffness matrix is tridiagonal, and its modes are standing
+    waves <span class="math">\(v_{ik}=\sin\frac{ik\pi}{N+1}\)</span> with frequencies
+    <span class="math">\(\omega_k=2\sin\frac{k\pi}{2(N+1)}\)</span>. Pick one mode to see it on its own, or <b>All</b> to
+    see a random mix of all of them. Thin coloured lines show each mode's share; the thick line is their sum.</p>
+  <div class="controls">
+    <label>N <input type="range" id="ch-n" min="2" max="24" step="1" value="5"><output id="ch-n-o">5</output></label>
+    <label>Show <select id="ch-mode"></select></label>
+    <label>speed <input type="range" id="ch-speed" min="0.2" max="3" step="0.1" value="1"></label>
+    <button id="ch-rand">New random mix</button>
+  </div>
+  <canvas id="ch-canvas" class="canvas" width="1100" height="300"></canvas>
+  <div class="grid2">
+    <div><h4>Each mode on its own</h4><canvas id="ch-multi" class="canvas" width="560" height="420"></canvas></div>
+    <div><h4>Mode shapes in 3D (bead × mode × displacement)</h4><div id="ch-3d" class="plot"></div></div>
+  </div>
+</section>
+
+<section id="market">
+  <h2><span class="num">4</span> The market's own modes</h2>
+  <p>Twelve large stocks from five sectors, daily returns 2015–2024. The correlation matrix splits into 12 modes.
+    Mode 0 is "everything together" (the market), the next few are sector spreads, and the last one is
+    almost a pure pair trade.</p>
+  <div class="grid2">
+    <div id="mk-heat" class="plot square-ish"></div>
+    <div id="mk-eig" class="plot square-ish"></div>
+  </div>
+  <h3>Each mode separately</h3>
+  <div class="btnrow" id="mk-modes"></div>
+  <p class="modedesc" id="mk-desc"></p>
+  <div id="mk-vec" class="plot short"></div>
+  <h3>Combination: rebuild any day from its modes</h3>
+  <p>A day's standardized returns <span class="math">\(r\)</span> equal <span class="math">\(\sum_k a_k v_k\)</span> with
+    <span class="math">\(a_k=v_k^\top r\)</span>. Pick a day and add modes one at a time.</p>
+  <div class="controls">
+    <label>Day <input type="range" id="mk-day" min="0" max="100" step="1" value="0" class="wide"> <output id="mk-day-o"></output></label>
+    <label>Modes used K <input type="range" id="mk-k" min="1" max="12" step="1" value="1"><output id="mk-k-o">1</output></label>
+    <button id="mk-crash">Jump to 16 Mar 2020</button>
+    <button id="mk-calm">Random calm day</button>
+  </div>
+  <div class="grid2">
+    <div id="mk-rebuild" class="plot"></div>
+    <div id="mk-share" class="plot"></div>
+  </div>
+</section>
+
+<section id="spectrum">
+  <h2><span class="num">5</span> The spectrum through time — 417 stocks</h2>
+  <p>Eigenvalues of the rolling 252-day correlation matrix of 417 S&amp;P&nbsp;500 stocks, one window per month,
+    against the Marchenko–Pastur noise floor (eigenvalues that pure noise could produce). Rotate the surface,
+    then scrub through time below.</p>
+  <div id="sp-3d" class="plot tall"></div>
+  <div class="controls">
+    <label>Window ending <input type="range" id="sp-t" min="0" max="10" step="1" value="0" class="wide"> <output id="sp-t-o"></output></label>
+  </div>
+  <div id="sp-2d" class="plot"></div>
+</section>
+
+<section id="reversion">
+  <h2><span class="num">6</span> Where does mean reversion live?</h2>
+  <div class="grid2">
+    <div>
+      <p>The overdamped oscillator model (an Ornstein–Uhlenbeck market) gives
+        <span class="math">\(\Sigma=\tfrac{s^2}{2}K^{-1}\)</span>, so <span class="math">\(\lambda_k = s^2/2\omega_k^2\)</span>:
+        <b>big λ means a soft spring and slow trending; small λ means a stiff spring and fast reversion.</b></p>
+      <p>The paper traded a reversion signal on <em>every</em> mode out of sample (2013–2024, before costs) and
+        grouped the results by position in the spectrum, relative to each month's Marchenko–Pastur edge.</p>
+      <div class="controls">
+        <label><input type="radio" name="sig" value="level" checked> level reversion (paper)</label>
+        <label><input type="radio" name="sig" value="return"> daily-return reversal (original spec.)</label>
+      </div>
+      <div class="callout" id="rev-callout"></div>
+    </div>
+    <div id="rev-plot" class="plot"></div>
+  </div>
+  <h3>Can machine learning tell which modes will revert?</h3>
+  <p>Walk-forward models trained on eigenvalue separation, half-life, autocorrelation, eigenvector stability,
+    volatility, concentration and regime features. Out-of-sample AUC with 95% confidence intervals from a bootstrap
+    over episodes (0.5 = coin flip).</p>
+  <div class="grid2">
+    <div id="auc-plot" class="plot"></div>
+    <div id="abl-plot" class="plot"></div>
+  </div>
+</section>
+
+<section id="lab">
+  <h2><span class="num">7</span> Strategy lab</h2>
+  <p>Walk-forward, market-neutral strategies built from the modes, out of sample from January 2013. Choose
+    strategies, set the trading cost, and shade the stress regime found by the hidden Markov model. Everything below is
+    recomputed in your browser from the daily gross PnL and turnover.</p>
+  <div class="controls">
+    <label>Cost <input type="range" id="lab-cost" min="0" max="10" step="0.25" value="2"> <output id="lab-cost-o">2</output> bp per unit turnover</label>
+    <label><input type="checkbox" id="lab-regime" checked> shade stress regime</label>
+    <label><input type="checkbox" id="lab-orig"> include original repo spec.</label>
+  </div>
+  <div class="checks" id="lab-checks"></div>
+  <div id="lab-plot" class="plot tall"></div>
+  <div class="tablewrap"><table id="lab-table"></table></div>
+  <p class="small">Break-even = the cost per unit turnover at which net return is zero. The regime overlay's form was
+    chosen after seeing that reversion pays in stress and loses in calm markets (disclosed in the paper), so treat
+    its results with extra scepticism.</p>
+</section>
+
+<section id="film">
+  <h2><span class="num">8</span> The film</h2>
+  <p>A 5½-minute Manim animation of the whole story: fifty years of relationships, oscillators for N = 2…16, and the
+    market's modes, with 3D views.</p>
+  <video controls preload="metadata" src="media/normal_modes_of_the_market.mp4" poster="media/poster.jpg"></video>
+</section>
+
+</main>
+
+<footer>
+  <p><b>Data.</b> Yahoo Finance (S&amp;P 500 ^GSPC price index, 10-year yield ^TNX, stock prices), datahub.io gold prices.
+    The stock universe is the current S&amp;P 500 restricted to names with complete 2010–2024 histories, which
+    introduces survivorship bias. Costs are a flat charge per unit turnover; execution is at the close.</p>
+  <p>Not investment advice. All numbers on this page are produced by the code in the repository.
+    · <a href="https://github.com/besufikad-a/normal-modes-of-the-market">github.com/besufikad-a/normal-modes-of-the-market</a></p>
+</footer>
+</body>
+</html>

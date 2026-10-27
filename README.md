@@ -4,6 +4,10 @@ Code and working paper for *Normal Modes of the Market: Mean Reversion
 Across the Correlation Spectrum, Machine-Learned Mode Selection, and
 Regimes* — [`paper/normal-modes-of-the-market.pdf`](paper/normal-modes-of-the-market.pdf).
 
+**Interactive site:** https://besufikad-a.github.io/normal-modes-of-the-market/ — oscillator
+simulators, 50-year asset explorer, market modes, 3-D spectrum and a strategy lab (source in `docs/`,
+data built by `site/build_data.py`).
+
 **Animated explainer (Manim):** [`animations/normal_modes_of_the_market.mp4`](animations/normal_modes_of_the_market.mp4)
 — fifty years of stocks, bonds and gold, coupled oscillators for N = 2…16, and the
 market's own modes, with 3-D views. See [`animations/README.md`](animations/README.md).

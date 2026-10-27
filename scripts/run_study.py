@@ -674,6 +674,20 @@ def stage_strategies(returns, data, probs):
                                  "sharpe": float(x.mean() / x.std() * np.sqrt(252)),
                                  "ann_ret": float(x.mean() * 252)})
     RESULTS["regime_perf"] = reg_perf
+
+    # Daily series for the interactive site (gross PnL + turnover, so any
+    # cost level can be applied client-side), and the regime probability.
+    cols = {}
+    for pool, (res, _) in strat.items():
+        for k, r in res.items():
+            cols[(pool, k, "gross")] = r["pnl_gross"]
+            cols[(pool, k, "turnover")] = r["turnover"]
+    cols[("--", "Original repo specification", "gross")] = orig_res["pnl_gross"]
+    cols[("--", "Original repo specification", "turnover")] = orig_res["turnover"]
+    daily = pd.DataFrame(cols)
+    daily.columns = ["|".join(c) for c in daily.columns]
+    daily["p_stress"] = probs["p_stress"].reindex(daily.index).ffill()
+    daily.to_parquet(OUT / "strategy_daily.parquet")
     return strat, orig_res, common_start
 
 
