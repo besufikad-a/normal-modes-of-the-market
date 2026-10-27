@@ -32,6 +32,7 @@ data/cache/
 *.pdf
 !paper/*.pdf
 !paper/figures/*.pdf
+!docs/media/*.pdf
 
 # LaTeX build files
 paper/*.aux
